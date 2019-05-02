@@ -18,9 +18,9 @@ type User struct {
 }
 
 type RequestResponse struct {
-	user      User
-	signature []byte
-	publicKey *rsa.PublicKey
+	user      User           `json:"user"`
+	signature []byte         `json:"signature"`
+	publicKey *rsa.PublicKey `json:"publicKey"`
 }
 
 func RegisterUser(authenticationServerRegister string) []byte {
@@ -37,7 +37,8 @@ func RegisterUser(authenticationServerRegister string) []byte {
 
 func (user *User) Vote(candidateId int, authenticationServerAddress string, publicKeyServer *rsa.PublicKey) {
 	user.candidateId = candidateId
-	userString, err := json.Marshal(user)
+	dummyUser := User{nil, nil, user.publicKey, candidateId}
+	userString, err := json.Marshal(dummyUser)
 	if err != nil {
 		log.Fatal("Error in vote:", err)
 	}
@@ -45,7 +46,7 @@ func (user *User) Vote(candidateId int, authenticationServerAddress string, publ
 	if err != nil {
 		log.Fatal("Error in Vote while Generating signature")
 	}
-	request := RequestResponse{*user, sig, publicKeyServer}
+	request := RequestResponse{*user, sig, user.publicKey}
 	requestByteArray, err := json.Marshal(request)
 	if err != nil {
 		log.Fatal("Error in Vote in converting RequestResponse object to json ")
@@ -56,4 +57,28 @@ func (user *User) Vote(candidateId int, authenticationServerAddress string, publ
 	}
 
 	fmt.Println("Response of the Post request in Vote:", resp)
+}
+
+func (user *User) GetVoteDetails(peerAddress string) {
+	dummyUser := User{nil, nil, user.publicKey, nil}
+	userString, err := json.Marshal(dummyUser)
+	if err != nil {
+		log.Fatal("Error in GetVoteDetails: converting to json", err)
+	}
+	sig, err := GenerateSignature(userString, user.privateKey)
+	if err != nil {
+		log.Fatal("Error in GetVoteDetails: in GenerateSignature", err)
+	}
+	request := RequestResponse{*user, sig, user.publicKey}
+	requestByteArray, err := json.Marshal(request)
+	if err != nil {
+		log.Fatal("Error in GetVoteDetails : ", err)
+	}
+
+	resp, err := http.Post(peerAddress, "application/json; charset=UTF-8", strings.NewReader(string(requestByteArray)))
+	if err != nil {
+		log.Fatal("Error in post request to vote")
+	}
+
+	fmt.Println("Response of post request:", resp)
 }

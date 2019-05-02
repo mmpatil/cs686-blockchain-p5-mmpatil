@@ -491,7 +491,6 @@ func GetCanonicalChains(SBC *data.SyncBlockChain) []p2.BlockChain {
 
 		}
 	}
-
 	return canonicalChains
 }
 
