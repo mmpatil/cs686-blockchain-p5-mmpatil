@@ -2,26 +2,26 @@
 
 
 					Voting System
-
+### Voting System 
 This is a three part application having a user interface for voters to interact with the voting system(For registration /voting and checking the blockchain for their vote). An authentication server which verifies the identity and allows a valid voter to vote. And a distributed system to count the votes and keep the process of voting completely visible. 
 
 
 Datastructures:
 
-1. User:
+## 1. User:
 Each user will have a national_id, public_key ,private_key and a candidate_id (to represent whom did the user vote to).
 
-2. Response
+## 2. Response
 Each Response will have user object , signature and public key.
 
 Required function for User:
 
-1)Register(authentication_server_address)
+# 1)Register(authentication_server_address)
 Get request to the server address with the national id of the user in the body of the  request.
 The response will contain the public and the private key pair. (User object with public and private key values set)
 Set the public_key and private_key values of this user.
 
-2) Vote(candidate_id, authentication_server_address)
+# 2) Vote(candidate_id, authentication_server_address)
 Set the candidate_id for this user indicating the user is voting this candidate for the election (user.candidate_id = candidate_id). 
 Create a User(userDummy) object with public_key , candidate_id set.
 Create a Response object 
@@ -31,7 +31,7 @@ Response. public_key = public_key
 
 Post request to the authentication_server_address with the user details in the body. (response object)
 
-3) GetVoteDetails(blockchain_server_address) 
+# 3) GetVoteDetails(blockchain_server_address) 
 Create a userDummy with public_key value set.
 Create a Response object (response)
 response.User = userDummy
@@ -39,13 +39,13 @@ response.signature = Create signature (userDummy,private_key)
 Get  request to the blockchain_server_address (one of the live-peers) with the response object in the body.
 Display the result.
 
-3. VoteMPT
+## 3. VoteMPT
 	Each VoteMPT will have 
 Mpt := MerkelPatriciaTrie (key = public_key, value = jsonstring)
 Signature := signature of the authentication server
 Public_key : = public_key of the authentication server
 
-3.  Authentication_Server
+## 3.  Authentication_Server
 Each authentication server will have 
 public_key, 
 private_key, 
@@ -54,9 +54,9 @@ UserDetailsMap  := map(key = public_key, value = User object),
 VoteCount := integer , number of people voted.
 VotedMap := map(key= int, value = VoteResponse)
 
-Required Functions:
+Required Functions for Authentication_server:
 
-1)Register(w,r)
+# 1)Register(w,r)
 Verify the national_id in the body of the request.
 If valid national_id create public-private key-pair
 Create a User object assign the national_id, public_key and private_key.
@@ -67,7 +67,7 @@ registerResponse.signature = Create a signature(User,private_key)
 resgisterResponse.public_key = public_key
 Send a response containing registerResponse object.
 
-2)Vote(w,r)
+# 2)Vote(w,r)
 Verify the signature in the post request.
 If the signature is valid 
 	Update the user object for the public_key in the UserDetailsMap (candidate_id 			field).
@@ -78,7 +78,7 @@ Else
 	Send Error
 
 
-3)CountVotes()
+# 3)CountVotes()
 Initialise a map VotesCountedMap (key = int, value = public_key)
 Count := 1
 while(len(VotesCountedMap) < len(VotedMap)){
@@ -96,7 +96,7 @@ while(len(VotesCountedMap) < len(VotedMap)){
 Print “Counting of votes is done”!!
 }	
 
-4)PrepareMPT(VotesCountedMap, VotedMap,int count)
+# 4)PrepareMPT(VotesCountedMap, VotedMap,int count)
 Create a MerklePatriciaTrie object (mpt)
 For i= count ; I < count + 10; count++{
 	VoteResponse := VotedMap.get(count)
@@ -108,13 +108,13 @@ Return mpt,VotesCountedMap, count
 
 
 
-PEERS (BLOCKCHAIN)
+## PEERS (BLOCKCHAIN)
 
 Additional map
 VotesInBlockchain := map(key = public_key, value = VoteMPT)
 CandidateAndVoteCountMap := map(key = candidate_id , value = count)
 
-1)Receive(w,r)
+# 1)Receive(w,r):
 Get the VoteMPT from the body.
 Verify the signature in the VoteMPT
 If the signature is valid 
@@ -126,7 +126,7 @@ If the signature is valid
 	In CandidateAndVoteCountMap increment the count for each vote for respective 			candidate
 	PrepareHeartBeat(mpt, CandidateAndVoteCountMap);
 
-2)RecieveHeartBeat() of Each Peer
+# 2)RecieveHeartBeat() of Each Peer:
 Get the VoteMPT from the body.
 Verify the signature in the VoteMPT
 If the signature is valid 
