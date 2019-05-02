@@ -1,17 +1,17 @@
 # cs686_BlockChain_P5
 
 
-					###Voting System
+					Voting System
 
 This is a three part application having a user interface for voters to interact with the voting system(For registration /voting and checking the blockchain for their vote). An authentication server which verifies the identity and allows a valid voter to vote. And a distributed system to count the votes and keep the process of voting completely visible. 
 
 
 Datastructures:
 
-##User:
+1. User:
 Each user will have a national_id, public_key ,private_key and a candidate_id (to represent whom did the user vote to).
 
-##2. Response
+2. Response
 Each Response will have user object , signature and public key.
 
 Required function for User:
