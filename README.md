@@ -1,7 +1,6 @@
 # cs686_BlockChain_P5
 
 
-					Voting System
 # Voting System 
 This is a three part application having a user interface for voters to interact with the voting system(For registration /voting and checking the blockchain for their vote). An authentication server which verifies the identity and allows a valid voter to vote. And a distributed system to count the votes and keep the process of voting completely visible. 
 
@@ -139,6 +138,8 @@ If the signature is valid
 	ForwardHeartBeat()
 
 
+------------------------------------------------------------------------------------------------------------
+Comments for Me:
 
 # Crypto
 
