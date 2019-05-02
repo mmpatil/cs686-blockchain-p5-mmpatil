@@ -4,6 +4,7 @@ import (
 	"crypto"
 	"crypto/rand"
 	"crypto/rsa"
+	"fmt"
 	"golang.org/x/crypto/sha3"
 	"log"
 )
@@ -34,6 +35,40 @@ func (keyPair *KeyPair) GenerateSignature(message []byte) ([]byte, error) {
 	return signature, nil
 }
 
-func VerifySignature() {
-	rsa.VerifyPKCS1v15()
+func VerifySignature(pub *rsa.PublicKey, sig []byte, message []byte) bool {
+	hashed := sha3.Sum256(message)
+	err := rsa.VerifyPKCS1v15(pub, crypto.SHA256, hashed[:], sig)
+
+	if err != nil {
+		log.Fatal("Error in verify signature")
+		return false
+	}
+	return true
+}
+
+func Test() {
+	privateKey := GenerateKeyPair()
+
+	priv := privateKey
+	pub := &privateKey.PublicKey
+
+	keyPair := KeyPair{priv, pub}
+
+	fmt.Println(keyPair, "\n\n")
+
+	message := "This is manali"
+
+	messageInBytes := []byte(message)
+
+	sig, err := keyPair.GenerateSignature(messageInBytes)
+
+	if err != nil {
+		log.Fatal("Error in signature generation")
+	}
+
+	fmt.Println("The signature is:", sig)
+
+	result := VerifySignature(keyPair.publicKey, sig, messageInBytes)
+
+	fmt.Println("Result of comparing:", result)
 }
