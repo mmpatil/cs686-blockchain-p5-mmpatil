@@ -1,4 +1,4 @@
-package p5
+package data
 
 import (
 	"crypto"
@@ -25,9 +25,9 @@ func GenerateKeyPair() *rsa.PrivateKey {
 	return privateKey
 }
 
-func (keyPair *KeyPair) GenerateSignature(message []byte) ([]byte, error) {
+func GenerateSignature(message []byte, privateKey *rsa.PrivateKey) ([]byte, error) {
 	hashed := sha3.Sum256(message)
-	signature, err := rsa.SignPKCS1v15(rand.Reader, keyPair.privateKey, crypto.SHA256, hashed[:])
+	signature, err := rsa.SignPKCS1v15(rand.Reader, privateKey, crypto.SHA256, hashed[:])
 	if err != nil {
 		log.Fatal("Error in generating signature", err)
 		return nil, err
@@ -60,7 +60,7 @@ func Test() {
 
 	messageInBytes := []byte(message)
 
-	sig, err := keyPair.GenerateSignature(messageInBytes)
+	sig, err := GenerateSignature(messageInBytes, priv)
 
 	if err != nil {
 		log.Fatal("Error in signature generation")
