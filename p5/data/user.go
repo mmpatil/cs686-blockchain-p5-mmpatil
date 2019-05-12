@@ -79,6 +79,5 @@ func (user *User) GetVoteDetails(peerAddress string) {
 	if err != nil {
 		log.Fatal("Error in post request to vote")
 	}
-
 	fmt.Println("Response of post request:", resp)
 }
