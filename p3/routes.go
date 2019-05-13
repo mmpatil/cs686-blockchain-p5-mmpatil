@@ -54,4 +54,16 @@ var routes = Routes{
 		"/canonical",
 		Canonical,
 	},
+	Route{
+		"StartClient",
+		"GET",
+		"/startClient",
+		StartClient,
+	},
+	Route{
+		"StartAuthServer",
+		"GET",
+		"/startAuth",
+		StartAuthServer,
+	},
 }

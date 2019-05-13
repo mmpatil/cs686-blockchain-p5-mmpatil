@@ -23,6 +23,7 @@ import (
 )
 
 var TA_SERVER = "http://localhost:6688"
+var AUTH_SERVER_REGISTER = ""
 var REGISTER_SERVER = TA_SERVER + "/peer"
 var BC_DOWNLOAD_SERVER = TA_SERVER + "/upload"
 var FIRST_ADDR = "http://localhost:6686"
@@ -38,24 +39,32 @@ var difficulty int
 
 //
 func init() {
-	body := os.Args[1]
-	SELF_ADDR = REUSE_ADDR + body
-	SBC = data.NewBlockChain()
-	difficulty = 2
-	if SELF_ADDR == FIRST_ADDR {
-		fmt.Println("Port Number:", os.Args[1])
-		mpt := getMPT()
-		findingNonce := false
-		for findingNonce == false {
-			nonce := makeNonce(difficulty)
-			str := "genesis" + nonce + mpt.Root
-			if isProofOfWork(str, difficulty) {
-				fmt.Println("Nonce found...")
-				b1 := SBC.Initial(mpt, nonce)
-				SBC.Insert(b1)
-				findingNonce = true
+	if os.Args[2] == "peer" {
+		body := os.Args[1]
+		SELF_ADDR = REUSE_ADDR + body
+		SBC = data.NewBlockChain()
+		difficulty = 2
+		if SELF_ADDR == FIRST_ADDR {
+			fmt.Println("Port Number:", os.Args[1])
+			mpt := getMPT()
+			findingNonce := false
+			for findingNonce == false {
+				nonce := makeNonce(difficulty)
+				str := "genesis" + nonce + mpt.Root
+				if isProofOfWork(str, difficulty) {
+					fmt.Println("Nonce found...")
+					b1 := SBC.Initial(mpt, nonce)
+					SBC.Insert(b1)
+					findingNonce = true
+				}
 			}
 		}
+	}
+	if os.Args[2] == "auth" {
+
+	}
+	if os.Args[2] == "client" {
+
 	}
 }
 
@@ -74,6 +83,16 @@ func Start(w http.ResponseWriter, r *http.Request) {
 		go StartHeartBeat()
 		StartTryingNonces()
 	}
+}
+
+func StartClient(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintf(w, "%s\n", "Client started....")
+
+}
+
+func StartAuthServer(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintf(w, "%s\n", "Authentication server started....")
+
 }
 
 // Display peerList and sbc
