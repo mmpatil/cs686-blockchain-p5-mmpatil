@@ -11,16 +11,16 @@ import (
 )
 
 type User struct {
-	nationalId  string          `json:"nationalId"`
-	privateKey  *rsa.PrivateKey `json:"privateKey"`
-	publicKey   *rsa.PublicKey  `json:"publicKey"`
-	candidateId int             `json:"candidateId"`
+	NationalId  string          `json:"nationalId"`
+	PrivateKey  *rsa.PrivateKey `json:"privateKey"`
+	PublicKey   *rsa.PublicKey  `json:"publicKey"`
+	CandidateId int             `json:"candidateId"`
 }
 
 type RequestResponse struct {
-	user      User           `json:"user"`
-	signature []byte         `json:"signature"`
-	publicKey *rsa.PublicKey `json:"publicKey"`
+	User      User           `json:"user"`
+	Signature []byte         `json:"signature"`
+	PublicKey *rsa.PublicKey `json:"publicKey"`
 }
 
 func RegisterUser(authenticationServerRegister string) []byte {
@@ -35,46 +35,69 @@ func RegisterUser(authenticationServerRegister string) []byte {
 	return body
 }
 
-func (user *User) Vote(candidateId int, authenticationServerAddress string, publicKeyServer *rsa.PublicKey) {
-	user.candidateId = candidateId
-	dummyUser := User{nil, nil, user.publicKey, candidateId}
+func (u *User) EncodeToJson() string {
+	jsonb, err := json.Marshal(u)
+
+	if err != nil {
+		log.Fatal("Error in EncodeToJson of User:", err)
+	}
+	return string(jsonb)
+}
+
+//todo
+func (reqRes *RequestResponse) EncodeRequestRespToJson() string {
+	jsonBytes, err := json.Marshal(reqRes)
+
+	if err != nil {
+		log.Fatal("Error in EncodeToJson RequestResponse:", err)
+	}
+	return string(jsonBytes)
+}
+
+//todo
+func (user *User) Vote(candidateId int, authenticationServerAddress string, publicKeyServer *rsa.PublicKey) bool {
+	user.CandidateId = candidateId
+	dummyUser := User{"", nil, user.PublicKey, candidateId}
 	userString, err := json.Marshal(dummyUser)
 	if err != nil {
-		log.Fatal("Error in vote:", err)
+		log.Println("Error in vote:", err)
+		return false
 	}
-	sig, err := GenerateSignature(userString, user.privateKey)
+	sig, err := GenerateSignature(userString, user.PrivateKey)
 	if err != nil {
-		log.Fatal("Error in Vote while Generating signature")
+		log.Println("Error in Vote while Generating signature")
+		return false
 	}
-	request := RequestResponse{*user, sig, user.publicKey}
+	request := RequestResponse{*user, sig, user.PublicKey}
 	requestByteArray, err := json.Marshal(request)
 	if err != nil {
-		log.Fatal("Error in Vote in converting RequestResponse object to json ")
+		log.Println("Error in Vote in converting RequestResponse object to json ")
+		return false
 	}
 	resp, err := http.Post(authenticationServerAddress, "application/json; charset=UTF-8", strings.NewReader(string(requestByteArray)))
 	if err != nil {
-		log.Fatal("Error in post request to vote")
+		log.Println("Error in post request to vote")
+		return false
 	}
-
-	fmt.Println("Response of the Post request in Vote:", resp)
+	fmt.Println("Response of the Post request in Vote in user.go:", resp)
+	return true
 }
 
 func (user *User) GetVoteDetails(peerAddress string) {
-	dummyUser := User{nil, nil, user.publicKey, nil}
+	dummyUser := User{"", nil, user.PublicKey, 0}
 	userString, err := json.Marshal(dummyUser)
 	if err != nil {
 		log.Fatal("Error in GetVoteDetails: converting to json", err)
 	}
-	sig, err := GenerateSignature(userString, user.privateKey)
+	sig, err := GenerateSignature(userString, user.PrivateKey)
 	if err != nil {
 		log.Fatal("Error in GetVoteDetails: in GenerateSignature", err)
 	}
-	request := RequestResponse{*user, sig, user.publicKey}
+	request := RequestResponse{*user, sig, user.PublicKey}
 	requestByteArray, err := json.Marshal(request)
 	if err != nil {
 		log.Fatal("Error in GetVoteDetails : ", err)
 	}
-
 	resp, err := http.Post(peerAddress, "application/json; charset=UTF-8", strings.NewReader(string(requestByteArray)))
 	if err != nil {
 		log.Fatal("Error in post request to vote")

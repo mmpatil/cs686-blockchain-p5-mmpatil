@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"html/template"
 	"io/ioutil"
 	"log"
 	"math/rand"
@@ -13,21 +14,22 @@ import (
 	"strings"
 	"time"
 
-	"golang.org/x/crypto/sha3"
-
 	"../blockpackage"
 	"../p1"
 	"../p2"
+	p5 "../p5/data"
 	"./data"
 	"github.com/gorilla/mux"
+	"golang.org/x/crypto/sha3"
 )
 
 var TA_SERVER = "http://localhost:6688"
-var AUTH_SERVER_REGISTER = ""
+var REGISTER = "/register"
 var REGISTER_SERVER = TA_SERVER + "/peer"
 var BC_DOWNLOAD_SERVER = TA_SERVER + "/upload"
 var FIRST_ADDR = "http://localhost:6686"
 var REUSE_ADDR = "http://localhost:"
+var REGISTRATION_SERVER = "9000"
 var SELF_ADDR string
 var MakeParent bool
 var SBC data.SyncBlockChain
@@ -36,14 +38,24 @@ var ReceivingBlockHeight int32
 var ifStarted bool
 var port int32
 var difficulty int
+var tpl *template.Template
+
+var votedNotFinalized map[string]p5.RequestResponse
+var finalizedVotes map[string]string
+var totalVotes = 0
+var votesForCandidate1 = 0
+var votesForCandidate2 = 0
 
 //
 func init() {
+	votedNotFinalized = make(map[string]p5.RequestResponse)
+	finalizedVotes = make(map[string]string)
+	tpl = template.Must(template.ParseGlob("p3/templates/*.html"))
 	if os.Args[2] == "peer" {
 		body := os.Args[1]
 		SELF_ADDR = REUSE_ADDR + body
 		SBC = data.NewBlockChain()
-		difficulty = 2
+		difficulty = 4
 		if SELF_ADDR == FIRST_ADDR {
 			fmt.Println("Port Number:", os.Args[1])
 			mpt := getMPT()
@@ -60,8 +72,9 @@ func init() {
 			}
 		}
 	}
-	if os.Args[2] == "auth" {
-
+	if os.Args[2] == "reg" {
+		REGISTRATION_SERVER = os.Args[1]
+		fmt.Println("REGISTRATION_SERVER:", REGISTRATION_SERVER)
 	}
 	if os.Args[2] == "client" {
 
@@ -81,18 +94,48 @@ func Start(w http.ResponseWriter, r *http.Request) {
 			Peers.Add(FIRST_ADDR, int32(6686))
 		}
 		go StartHeartBeat()
-		StartTryingNonces()
+		go StartTryingNonces()
 	}
 }
 
-func StartClient(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "%s\n", "Client started....")
-
+//now
+func GetPeerList(w http.ResponseWriter, r *http.Request) {
+	peers, err := Peers.PeerMapToJson()
+	if err != nil {
+		log.Fatal("Error in converting peerMapToJson:", err)
+	}
+	fmt.Fprint(w, peers)
 }
+
+//func StartClient(w http.ResponseWriter, r *http.Request) {
+//	//fmt.Fprintf(w, "%s\n", "Client started....")
+//	tpl.ExecuteTemplate(w,"startclient.html",nil)
+//
+//}
+//
+//func SignUp(w http.ResponseWriter, r *http.Request){
+//	tpl.ExecuteTemplate(w,"signup.html",nil)
+//}
+//
+//func SignIn(w http.ResponseWriter, r *http.Request){
+//	tpl.ExecuteTemplate(w,"signin.html",nil)
+//}
+//
+//func RegisterClient(w http.ResponseWriter,r *http.Request){
+//	//todo
+//	if r.Method != "POST"{
+//		http.Redirect(w,r,"/",http.StatusSeeOther)
+//		return
+//	}
+//	nationalId := r.FormValue("nationalId")
+//
+//	address := REUSE_ADDR+AUTH_SERVER_PORT+REGISTER+"/"+nationalId
+//
+//	fmt.Println("Entered in Register Client. The address used will be:",address)
+//}
 
 func StartAuthServer(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "%s\n", "Authentication server started....")
-
 }
 
 // Display peerList and sbc
@@ -193,13 +236,14 @@ func returnCode204(w http.ResponseWriter, r *http.Request) {
 // HeartBeatReceive methhReceived a heartbeat
 func HeartBeatReceive(w http.ResponseWriter, r *http.Request) {
 	bytes, _ := ioutil.ReadAll(r.Body)
+	defer r.Body.Close()
 	var newheartBeat data.HeartBeatData
 	err := json.Unmarshal(bytes, &newheartBeat)
 	if err != nil {
 		data.PrintError(err, "HeartBeatReceive")
 		return
 	}
-	ProcessHeartBeat(newheartBeat)
+	go ProcessHeartBeat(newheartBeat)
 	Forward(newheartBeat)
 }
 
@@ -231,7 +275,7 @@ func StartTryingNonces() {
 			parentBlock := parentBlocks[0]
 			parentHash := parentBlock.Header.Hash
 			height := parentBlock.Header.Height
-			mpt := getMPT()
+			mpt := getMPT() //now
 			str := ""
 			str = str + parentHash
 			for foundNonce == false {
@@ -243,7 +287,7 @@ func StartTryingNonces() {
 					blockjson, _ := b1.EncodeToJSON()
 					if ReceivingBlockHeight != SBC.GetLatestHeight() {
 						SBC.Insert(b1)
-						HeartBeat(blockjson, true)
+						HeartBeat(blockjson, true) // go here
 					}
 					foundNonce = true
 				}
@@ -278,6 +322,36 @@ func makeNonce(lenght int) string {
 	return nonce
 }
 
+//todo
+func ifValidBlockBeat(newheartBeat data.HeartBeatData) bool {
+	blockJSON := newheartBeat.BlockJson
+	newBlock, _ := blockpackage.DecodeFromJSON(blockJSON)
+	mpt := newBlock.Value
+	mptMap := mpt.GetAll()
+
+	for k, _ := range mptMap {
+		_, exists := finalizedVotes[k]
+		if exists == true {
+			return false
+		}
+	}
+	return true
+}
+
+//now
+func ifValidBlock(newBlock blockpackage.Block) bool {
+	mpt := newBlock.Value
+	mptMap := mpt.GetAll()
+
+	for k, _ := range mptMap {
+		_, exists := finalizedVotes[k]
+		if exists == true {
+			return false
+		}
+	}
+	return true
+}
+
 //ProcessHeartBeat method
 func ProcessHeartBeat(newheartBeat data.HeartBeatData) {
 	var insert bool
@@ -285,50 +359,55 @@ func ProcessHeartBeat(newheartBeat data.HeartBeatData) {
 	registerData := data.NewRegisterData(port, peerMapJson)
 	RegisterPeerMap(registerData, newheartBeat)
 	if newheartBeat.IfNewBlock == true {
-		blockJSON := newheartBeat.BlockJson
-		newBlock, _ := blockpackage.DecodeFromJSON(blockJSON)
-		ReceivingBlockHeight = newBlock.Header.Height
-		parentHash := newBlock.Header.ParentHash
-		nonce := newBlock.Header.Nonce
-		str := parentHash + nonce + newBlock.Value.Root
-		if isProofOfWork(str, difficulty) {
-			blockChain := SBC.GetBlockChain()
-			height := blockChain.Length
-			blocks, _ := blockChain.Get(height) //get current block at a height from blockchain
-			for _, block := range blocks {
-				if block.Header.Hash == parentHash {
-					SBC.Insert(newBlock)
-					insert = true
+		//if block is valid
+		if ifValidBlockBeat(newheartBeat) { //now
+			blockJSON := newheartBeat.BlockJson
+			newBlock, _ := blockpackage.DecodeFromJSON(blockJSON)
+			ReceivingBlockHeight = newBlock.Header.Height
+			parentHash := newBlock.Header.ParentHash
+			nonce := newBlock.Header.Nonce
+			str := parentHash + nonce + newBlock.Value.Root
+			if isProofOfWork(str, difficulty) {
+				blockChain := SBC.GetBlockChain()
+				height := blockChain.Length
+				blocks, _ := blockChain.Get(height) //get current block at a height from blockchain
+				for _, block := range blocks {
+					if block.Header.Hash == parentHash {
+						SBC.Insert(newBlock)
+						insert = true
+					}
 				}
-			}
-			if insert == false {
-				blocks := []blockpackage.Block{}
-				i := newBlock.Header.Height - 1
-				latestBlocks, _ := SBC.GetLatestBlocks()
-				completed := false
-				for i > 0 {
-					block, exists := AskForBlock(i, newBlock.Header.ParentHash)
-					if exists {
-						blocks[i] = block
-						i--
-						for _, latestBlock := range latestBlocks {
-							if block.Header.ParentHash == latestBlock.Header.Hash {
-								completed = true
-								break
+				if insert == false {
+					blocks := []blockpackage.Block{}
+					i := newBlock.Header.Height - 1
+					latestBlocks, _ := SBC.GetLatestBlocks()
+					completed := false
+					for i > 0 {
+						block, exists := AskForBlock(i, newBlock.Header.ParentHash)
+						if exists {
+							blocks[i] = block
+							i--
+							for _, latestBlock := range latestBlocks {
+								if block.Header.ParentHash == latestBlock.Header.Hash {
+									completed = true
+									break
+								}
 							}
 						}
+						if completed == true {
+							break
+						}
 					}
-					if completed == true {
-						break
+					if len(blocks) > 0 {
+						for _, block := range blocks {
+							if ifValidBlock(block) { //now
+								SBC.Insert(block)
+							}
+						}
+						fmt.Println("Block exists and recovered from another peer")
+					} else {
+						fmt.Println("Block does not exists")
 					}
-				}
-				if len(blocks) > 0 {
-					for _, block := range blocks {
-						SBC.Insert(block)
-					}
-					fmt.Println("Block exists and recovered from another peer")
-				} else {
-					fmt.Println("Block does not exists")
 				}
 			}
 		}
@@ -362,6 +441,7 @@ func AskForBlock(height int32, hash string) (blockpackage.Block, bool) {
 	if len(thePeerMap) > 0 {
 		for k, _ := range thePeerMap {
 			resp, err1 := http.Get(k + "block/" + strconv.Itoa(int(height)) + "/" + hash)
+
 			if err1 != nil {
 				//fmt.Println("Error")
 				continue
@@ -371,12 +451,12 @@ func AskForBlock(height int32, hash string) (blockpackage.Block, bool) {
 					peersToRemove = append(peersToRemove, k)
 					continue
 				}
-				defer resp.Body.Close()
 				body, err := ioutil.ReadAll(resp.Body)
 				if err != nil {
 					fmt.Println("here error in reading body")
 					continue
 				}
+				resp.Body.Close()
 				if len(body) > 0 {
 					newBlock, _ = blockpackage.DecodeFromJSON(string(body))
 					blockExists = true
@@ -513,13 +593,55 @@ func GetCanonicalChains(SBC *data.SyncBlockChain) []p2.BlockChain {
 	return canonicalChains
 }
 
-//
+//now
+func Vote(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("Vote Recieved in peer vote")
+	reqResp := p5.RequestResponse{}
+	bytes, _ := ioutil.ReadAll(r.Body)
+	defer r.Body.Close()
+	err := json.Unmarshal(bytes, &reqResp)
+	if err != nil {
+		log.Fatal("Error in Vote function at miner in unmarshal", err)
+	}
+	publicKey := reqResp.PublicKey.N.String()
+
+	_, valid1 := votedNotFinalized[publicKey]
+
+	_, valid2 := finalizedVotes[publicKey]
+
+	if valid1 == false && valid2 == false {
+		votedNotFinalized[publicKey] = reqResp
+		fmt.Println("Vote added:lenght:", len(votedNotFinalized))
+	}
+	fmt.Println("check if Vote added above")
+
+	_, err = fmt.Fprintf(w, "Vote Added to the Miner!!!!")
+	if err != nil {
+		log.Fatal("Error in vote for Fprintf")
+	}
+}
+
+//now
 func getMPT() p1.MerklePatriciaTrie {
 	mpt := p1.MerklePatriciaTrie{}
 	mpt.Initial()
-	mpt.Insert("do", "verb")
-	mpt.Insert("dog", "puppy")
-	mpt.Insert("doge", "coin")
-	mpt.Insert("horse", "stallion")
+	var arrayPK []string
+	if len(votedNotFinalized) > 0 {
+		for k, v := range votedNotFinalized {
+			reqResString := v.EncodeRequestRespToJson()
+			mpt.Insert(k, reqResString)
+			arrayPK = append(arrayPK, k)
+			//	delete(votedNotFinalized, k)
+		}
+		for _, value := range arrayPK {
+			delete(votedNotFinalized, value)
+		}
+	}
+	//mpt := p1.MerklePatriciaTrie{}
+	//mpt.Initial()
+	//mpt.Insert("do", "verb")
+	//mpt.Insert("dog", "puppy")
+	//mpt.Insert("doge", "coin")
+	//mpt.Insert("horse", "stallion")
 	return mpt
 }
