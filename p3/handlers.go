@@ -40,8 +40,8 @@ var difficulty int
 var tpl *template.Template
 var latestBlockRecievedHeight int32
 
-var votedNotFinalizedStruct p5.VotesNotFinalized
-var finalizedVotesStruct p5.FinalizedVotes
+var votedNotFinalizedStruct blockpackage.VotesNotFinalized
+var finalizedVotesStruct blockpackage.FinalizedVotes
 
 //var votedNotFinalized map[string]p5.RequestResponse
 //var finalizedVotes map[string]string
@@ -52,7 +52,7 @@ var finalizedVotesStruct p5.FinalizedVotes
 //
 func init() {
 	SELF_ADDR = REUSE_ADDR + os.Args[1]
-	votedNotFinalizedStruct, finalizedVotesStruct = p5.InitializieVoteMaps()
+	votedNotFinalizedStruct, finalizedVotesStruct = blockpackage.InitializieVoteMaps()
 	//p5.InitializieVoteMaps()
 	//votedNotFinalized = make(map[string]p5.RequestResponse)
 	//finalizedVotes = make(map[string]string)
@@ -64,7 +64,7 @@ func init() {
 		difficulty = 2
 		if SELF_ADDR == FIRST_ADDR {
 			fmt.Println("Port Number:", os.Args[1])
-			mpt, _ := p5.PrepareMPT(finalizedVotesStruct, votedNotFinalizedStruct, true) //now p5
+			mpt, _ := blockpackage.PrepareMPT(finalizedVotesStruct, votedNotFinalizedStruct, true) //now p5
 			//mpt := getMPT()
 			findingNonce := false
 			for findingNonce == false {
@@ -72,12 +72,12 @@ func init() {
 				str := "genesis" + nonce + mpt.Root
 				if isProofOfWork(str, difficulty, false) {
 					fmt.Println("Nonce found...")
-					b1 := SBC.Initial(mpt, nonce)
-					if finalizedVotesStruct.IfValidBlock(b1) {
-						SBC.Insert(b1)
-						finalizedVotesStruct.InsertInToFinalizedVotes(b1)
-						findingNonce = true
-					}
+					b1 := SBC.Initial(mpt, nonce, finalizedVotesStruct)
+					//if finalizedVotesStruct.IfValidBlock(b1) {
+					SBC.Insert(b1)
+					finalizedVotesStruct.InsertInToFinalizedVotes(b1)
+					findingNonce = true
+					//}
 				}
 			}
 		}
@@ -309,7 +309,7 @@ func StartTryingNonces() {
 			parentHash := parentBlock.Header.Hash
 			height := parentBlock.Header.Height
 			mpt := p1.MerklePatriciaTrie{}
-			mpt, valid = p5.PrepareMPT(finalizedVotesStruct, votedNotFinalizedStruct, false) //now p5
+			mpt, valid = blockpackage.PrepareMPT(finalizedVotesStruct, votedNotFinalizedStruct, false) //now p5
 			//fmt.Println("Valid:",valid)  // debugging
 			if valid { //now p5 1
 				//fmt.Println("444444444444444444444444444444444444444444444")
@@ -324,7 +324,8 @@ func StartTryingNonces() {
 					str = str + mpt.Root
 					if isProofOfWork(str, difficulty, false) {
 						var b1 blockpackage.Block
-						b1 = SBC.GenBlock(mpt, nonce, height)
+
+						b1 = SBC.GenBlock(mpt, nonce, height, finalizedVotesStruct)
 						blockjson, _ := b1.EncodeToJSON()
 						//if ReceivingBlockHeight != SBC.GetLatestHeight() { //todo
 						//check if the block is valid block
@@ -703,6 +704,61 @@ func Vote(w http.ResponseWriter, r *http.Request) {
 	_, err = fmt.Fprintf(w, "Vote Added to the Miner!!!!")
 	if err != nil {
 		log.Fatal("Error in vote for Fprintf")
+	}
+}
+
+func ShowBlockAtHeight(w http.ResponseWriter, r *http.Request) {
+	//body := BodyToSend{}
+	//bytes, _ := ioutil.ReadAll(r.Body)
+	//defer r.Body.Close()
+	//err := json.Unmarshal(bytes, &body)
+	//if err != nil {
+	//	log.Fatal("Error in Vote function at miner in unmarshal", err)
+	//}
+	//height := body.Height
+	//heightString := r.FormValue("height")
+	//height, _ := strconv.Atoi(heightString)
+	vars := mux.Vars(r)
+	height, _ := strconv.Atoi(vars["height"])
+	//heightInInt,_ := strconv.Atoi(height)
+	var blocks []blockpackage.Block
+	var jsonString []string
+	var candidateMap map[int]int
+	blocks, _ = SBC.Get(int32(height))
+	for _, v := range blocks {
+		s, _ := v.EncodeToJSON()
+		jsonString = append(jsonString, s)
+		candidateMap = v.Header.FinalizedVotesStruct.CandidateVoteMap
+	}
+
+	jsonMarshalResult, _ := json.Marshal(candidateMap)
+
+	//type customData struct {
+	//	Title   string
+	//	Cmap string
+	//}
+	//
+	//cd := customData{
+	//	Title:   "Block Information",
+	//	Cmap: string(jsonMarshalResult),
+	//}
+	//tpl.ExecuteTemplate(w, "blockinformation.html", cd)
+	//	blockchainjson,_ := blockchain.EncodeToJSON()
+	fmt.Fprintf(w, "%s\n", jsonMarshalResult)
+}
+
+func VoteInfo(w http.ResponseWriter, r *http.Request) {
+	respUser := p5.User{}
+
+	bytes, _ := ioutil.ReadAll(r.Body)
+	defer r.Body.Close()
+	json.Unmarshal(bytes, &respUser)
+
+	publicKey := respUser.PublicKey.N.String()
+
+	jsonString, exists := finalizedVotesStruct.FinalizedVotes[publicKey]
+	if exists {
+		fmt.Fprintf(w, "%s\n", jsonString)
 	}
 }
 

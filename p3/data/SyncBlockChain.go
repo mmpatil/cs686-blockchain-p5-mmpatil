@@ -75,7 +75,7 @@ func (sbc *SyncBlockChain) BlockChainToJson() (string, error) {
 }
 
 //GenBlock method
-func (sbc *SyncBlockChain) GenBlock(mpt p1.MerklePatriciaTrie, nonce string, height int32) block1.Block {
+func (sbc *SyncBlockChain) GenBlock(mpt p1.MerklePatriciaTrie, nonce string, height int32, finalizedVotes block1.FinalizedVotes) block1.Block {
 	block := block1.Block{}
 	//height := sbc.bc.Length
 	blocks, found := sbc.Get(height)
@@ -85,7 +85,7 @@ func (sbc *SyncBlockChain) GenBlock(mpt p1.MerklePatriciaTrie, nonce string, hei
 	parentHash := blocks[0].Header.Hash
 	parentHeight := blocks[0].Header.Height
 	if parentHash != "" && height >= 0 {
-		block.Initial(parentHeight+1, parentHash, mpt, nonce)
+		block.Initial(parentHeight+1, parentHash, mpt, nonce, finalizedVotes)
 	}
 	return block
 }
@@ -116,10 +116,10 @@ func (sbc *SyncBlockChain) GetParentBlock(block block1.Block) (block1.Block, boo
 }
 
 //Initial method
-func (sbc *SyncBlockChain) Initial(mpt p1.MerklePatriciaTrie, nonce string) block1.Block {
+func (sbc *SyncBlockChain) Initial(mpt p1.MerklePatriciaTrie, nonce string, votes block1.FinalizedVotes) block1.Block {
 	sbc.mux.Lock()
 	defer sbc.mux.Unlock()
-	return sbc.bc.InitialBlock(mpt, nonce)
+	return sbc.bc.InitialBlock(mpt, nonce, votes)
 }
 
 //Show method

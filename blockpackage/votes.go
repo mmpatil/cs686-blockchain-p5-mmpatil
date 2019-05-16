@@ -1,8 +1,8 @@
-package data
+package blockpackage
 
 import (
-	blockpackage "../../blockpackage"
-	p1 "../../p1"
+	p1 "../p1"
+	p5 "../p5/data"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -10,21 +10,21 @@ import (
 )
 
 type VotesNotFinalized struct {
-	Votes map[string]RequestResponse
+	Votes map[string]p5.RequestResponse
 	mux   sync.Mutex
 }
 
 type FinalizedVotes struct {
-	FinalizedVotes   map[string]string
-	TotalVotes       int
-	CandidateVoteMap map[int]int
+	FinalizedVotes   map[string]string `json:"FinalizedVotes"`
+	TotalVotes       int               `json:"TotalVotes"`
+	CandidateVoteMap map[int]int       `json:"CandidateVoteMap"`
 	mux              sync.Mutex
 }
 
 func InitializieVoteMaps() (VotesNotFinalized, FinalizedVotes) {
 
 	notfinalizedVotes := VotesNotFinalized{
-		Votes: make(map[string]RequestResponse),
+		Votes: make(map[string]p5.RequestResponse),
 	}
 
 	finalizedVotes := FinalizedVotes{
@@ -39,13 +39,25 @@ func InitializieVoteMaps() (VotesNotFinalized, FinalizedVotes) {
 	return notfinalizedVotes, finalizedVotes
 }
 
-func (finalizedVotes *FinalizedVotes) IfValidBlock(newBlock blockpackage.Block) bool {
+func (finalizedVotes *FinalizedVotes) IfValidBlock(newBlock Block) bool {
 	fmt.Println("In votes.go IfValidBlock")
 	finalizedVotes.mux.Lock()
 	defer finalizedVotes.mux.Unlock()
 	mpt := p1.MerklePatriciaTrie{}
 	mpt = newBlock.Value
 	mptMap := mpt.GetAll()
+
+	//var finalizedVotesNew FinalizedVotes
+	//finalizedVotesNew  = newBlock.Header.FinalizedVotesStruct
+	//
+	//if finalizedVotes.TotalVotes >= finalizedVotesNew.TotalVotes{
+	//	for k,_ := range finalizedVotesNew.CandidateVoteMap{
+	//		if finalizedVotesNew.CandidateVoteMap[k] == finalizedVotes.CandidateVoteMap[k]{
+	//			return false
+	//		}
+	//	}
+	//	return false
+	//}
 
 	for k, _ := range mptMap {
 		_, exists := finalizedVotes.FinalizedVotes[k]
@@ -67,7 +79,8 @@ func (finalizedVotes *FinalizedVotes) IfValidBlock(newBlock blockpackage.Block) 
 	return true
 }
 
-func (finalizedVotes *FinalizedVotes) InsertInToFinalizedVotes(newBlock blockpackage.Block) {
+func (finalizedVotes *FinalizedVotes) InsertInToFinalizedVotes(newBlock Block) {
+	fmt.Println("----------------------------------InsertInToFinalizedVotes-----------------")
 	finalizedVotes.mux.Lock()
 	defer finalizedVotes.mux.Unlock()
 
@@ -75,7 +88,7 @@ func (finalizedVotes *FinalizedVotes) InsertInToFinalizedVotes(newBlock blockpac
 	mpt = newBlock.Value
 	mptMap := mpt.GetAll()
 	for key, value := range mptMap {
-		reqresp := RequestResponse{}
+		reqresp := p5.RequestResponse{}
 		finalizedVotes.FinalizedVotes[key] = value
 		err := json.Unmarshal([]byte(value), &reqresp)
 		if err != nil {
@@ -84,11 +97,12 @@ func (finalizedVotes *FinalizedVotes) InsertInToFinalizedVotes(newBlock blockpac
 		id := reqresp.User.CandidateId
 		value, exists := finalizedVotes.CandidateVoteMap[id]
 		if exists {
+			finalizedVotes.TotalVotes += 1
 			value++
 			finalizedVotes.CandidateVoteMap[id] = value
+			finalizedVotes = &newBlock.Header.FinalizedVotesStruct //justnow p5
 		}
-		finalizedVotes.TotalVotes += 1
-		fmt.Println("finalizedVotes", finalizedVotes.FinalizedVotes)
+		fmt.Println("*******************************************************!!!!!!!!!!!!!!!!!!!!!!finalizedVotes", finalizedVotes.TotalVotes)
 	}
 }
 
@@ -157,7 +171,7 @@ func (votesNotFinalized *VotesNotFinalized) ExistsInVotesNotFinalized(tempPublic
 	return exists
 }
 
-func (votesNotFinalized *VotesNotFinalized) InsertVotedNotFinalized(publicKey string, reqresp RequestResponse) bool {
+func (votesNotFinalized *VotesNotFinalized) InsertVotedNotFinalized(publicKey string, reqresp p5.RequestResponse) bool {
 	votesNotFinalized.mux.Lock()
 	defer votesNotFinalized.mux.Unlock()
 	//if votesNotFinalized.ExistsInVotesNotFinalized(publicKey) == false {

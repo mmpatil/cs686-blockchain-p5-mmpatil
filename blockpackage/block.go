@@ -11,12 +11,13 @@ import (
 
 //Header of a block
 type Header struct {
-	Height     int32
-	Timestamp  int64
-	Hash       string
-	ParentHash string
-	Nonce      string
-	Size       int32
+	Height               int32
+	Timestamp            int64
+	Hash                 string
+	ParentHash           string
+	Nonce                string
+	Size                 int32
+	FinalizedVotesStruct FinalizedVotes
 }
 
 //Block of blockchain
@@ -27,17 +28,19 @@ type Block struct {
 
 //The BlockJson to create
 type BlockJson struct {
-	Height     int32             `json:"height"`
-	Timestamp  int64             `json:"timeStamp"`
-	Hash       string            `json:"hash"`
-	ParentHash string            `json:"parentHash"`
-	Size       int32             `json:"size"`
-	Nonce      string            `json:"nonce"`
-	MPT        map[string]string `json:"mpt"`
+	Height               int32             `json:"height"`
+	Timestamp            int64             `json:"timeStamp"`
+	Hash                 string            `json:"hash"`
+	ParentHash           string            `json:"parentHash"`
+	Size                 int32             `json:"size"`
+	Nonce                string            `json:"nonce"`
+	MPT                  map[string]string `json:"mpt"`
+	FinalizedVotesStruct FinalizedVotes    `json:"finalizedVotes"` //now
+
 }
 
 //Initial block type created.
-func (block *Block) Initial(height int32, parentHash string, mpt p1.MerklePatriciaTrie, nonce string) {
+func (block *Block) Initial(height int32, parentHash string, mpt p1.MerklePatriciaTrie, nonce string, finalizedVotes FinalizedVotes) { //now
 	block.Header.Height = height
 	block.Header.ParentHash = parentHash
 	block.Header.Nonce = nonce
@@ -45,6 +48,7 @@ func (block *Block) Initial(height int32, parentHash string, mpt p1.MerklePatric
 	block.Header.Timestamp = time.Now().Unix()
 	block.Header.Size = int32(len([]byte(block.Value.String())))
 	block.Header.Hash = calculateBlockHash(*block)
+	block.Header.FinalizedVotesStruct = finalizedVotes
 }
 
 //calculateBlockHash method calculates the block hash
@@ -67,6 +71,7 @@ func DecodeFromJSON(jsonString string) (Block, error) {
 		block.Header.Timestamp = blockJSON.Timestamp
 		block.Header.Size = blockJSON.Size
 		block.Header.Hash = blockJSON.Hash
+		block.Header.FinalizedVotesStruct = blockJSON.FinalizedVotesStruct
 		mpt := new(p1.MerklePatriciaTrie)
 		mpt.Initial()
 		for k, v := range blockJSON.MPT {
@@ -87,6 +92,7 @@ func (block *Block) EncodeToJSON() (string, error) {
 	blockJSON.Nonce = block.Header.Nonce
 	blockJSON.Timestamp = block.Header.Timestamp
 	blockJSON.Size = block.Header.Size
+	blockJSON.FinalizedVotesStruct = block.Header.FinalizedVotesStruct
 	blockJSON.MPT = block.Value.GetAll()
 	byteArray, err := json.Marshal(blockJSON)
 	s := string(byteArray)

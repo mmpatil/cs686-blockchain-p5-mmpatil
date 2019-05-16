@@ -154,10 +154,10 @@ func (blockchain *BlockChain) CheckParentHash(insertBlock block1.Block) bool {
 }
 
 //todotodo
-func (blockchain *BlockChain) InitialBlock(mpt p1.MerklePatriciaTrie, nonce string) block1.Block {
+func (blockchain *BlockChain) InitialBlock(mpt p1.MerklePatriciaTrie, nonce string, votes block1.FinalizedVotes) block1.Block {
 	block := block1.Block{}
 	if blockchain.Length == 0 {
-		block.Initial(1, "genesis", mpt, nonce)
+		block.Initial(1, "genesis", mpt, nonce, votes)
 	}
 	return block
 }

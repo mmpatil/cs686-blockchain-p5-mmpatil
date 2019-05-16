@@ -20,6 +20,16 @@ var SECOND_ADDR = "http://localhost:6687"
 
 //var REGISTRATION_SERVER string
 
+type BodyToSend struct {
+	Height int `json:"Height"`
+}
+
+func MarshalBody(body BodyToSend) string {
+
+	a, _ := json.Marshal(body)
+	return string(a)
+}
+
 func StartClient(w http.ResponseWriter, r *http.Request) {
 	//fmt.Fprintf(w, "%s\n", "Client started....")
 	tpl.ExecuteTemplate(w, "startclient.html", nil)
@@ -31,6 +41,10 @@ func StartClient(w http.ResponseWriter, r *http.Request) {
 
 func StartRegistrationServer(w http.ResponseWriter, r *http.Request) {
 	userList = p5.NewUserList()
+}
+
+func ShowVoteUserC(w http.ResponseWriter, r *http.Request) {
+	tpl.ExecuteTemplate(w, "voteinfo.html", nil)
 }
 
 func SignUp(w http.ResponseWriter, r *http.Request) {
@@ -130,6 +144,24 @@ func DisplayUsers(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "%s\n", usersArray)
 }
 
+func ShowBlock(w http.ResponseWriter, r *http.Request) {
+	heightString := r.FormValue("height")
+	height, _ := strconv.Atoi(heightString)
+
+	address := REUSE_ADDR + REGISTRATION_SERVER + "/showBlockAtHeight"
+
+	bodyToSend := BodyToSend{
+		Height: height,
+	}
+
+	body := MarshalBody(bodyToSend)
+
+	_, err2 := http.Post(address, "application/json; charset=UTF-8", strings.NewReader(string(body)))
+	if err2 != nil {
+		log.Fatal("Error in Check User response of Post request")
+	}
+}
+
 func CheckUser(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "POST" {
 		http.Redirect(w, r, "/", http.StatusSeeOther)
@@ -190,6 +222,38 @@ func CheckUser(w http.ResponseWriter, r *http.Request) {
 	} else {
 		fmt.Fprintf(w, "%s\n", "Error in reading the body")
 	}
+}
+
+func ShowVoteUser(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
+	}
+	publicKey := r.FormValue("publicKey")
+	//privateKey := r.FormValue("privateKey")
+
+	//fmt.Println("PublicKey:", publicKey)
+	//fmt.Println("PrivateKey:", privateKey)
+
+	jsonString := "{\"nationalId\":\"556655665566\",\"privateKey\":" + "" + ",\"publicKey\":" + publicKey + ",\"candidateId\":0}"
+
+	newUser := p5.User{}
+	err := json.Unmarshal([]byte(jsonString), &newUser)
+
+	if err != nil {
+		log.Fatal("Error in unmarshal CheckUser manually preparing json!!!")
+	}
+
+	//jsonString,_ := json.Marshal(newUser)
+
+	address := REUSE_ADDR + REGISTRATION_SERVER + "/voteInfo"
+
+	_, err2 := http.Post(address, "application/json; charset=UTF-8", strings.NewReader(string(jsonString)))
+
+	if err2 != nil {
+		log.Fatal("Error in Check User response of Post request")
+	}
+
 }
 
 func ClientFetchingPeerList() {

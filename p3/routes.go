@@ -144,4 +144,35 @@ var routes = Routes{
 		"/showMPT",
 		ShowMPT,
 	},
+	Route{
+		"ShowBlock",
+		"POST",
+		"/showBlock",
+		ShowBlock,
+	},
+	Route{
+		"ShowBlockAtHeight",
+		"GET",
+		"/showBlockAtHeight/{height}",
+		ShowBlockAtHeight,
+	},
+	Route{
+		"ShowVoteUser",
+		"POST",
+		"/showVoteUser",
+		ShowVoteUser,
+	},
+	Route{
+		"ShowVoteUserC",
+		"POST",
+		"/showVoteUserC",
+		ShowVoteUserC,
+	},
+
+	Route{
+		"VoteInfo",
+		"POST",
+		"/voteInfo",
+		VoteInfo,
+	},
 }
