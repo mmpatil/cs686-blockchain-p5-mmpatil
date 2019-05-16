@@ -51,6 +51,7 @@ var finalizedVotesStruct p5.FinalizedVotes
 
 //
 func init() {
+	SELF_ADDR = REUSE_ADDR + os.Args[1]
 	votedNotFinalizedStruct, finalizedVotesStruct = p5.InitializieVoteMaps()
 	//p5.InitializieVoteMaps()
 	//votedNotFinalized = make(map[string]p5.RequestResponse)
@@ -92,6 +93,7 @@ func init() {
 
 // Register ID, download BlockChain, start HeartBeat
 func Start(w http.ResponseWriter, r *http.Request) {
+	SELF_ADDR = REUSE_ADDR + os.Args[1]
 	fmt.Println("Start")
 	if ifStarted == false {
 		ifStarted = true
@@ -190,6 +192,7 @@ func Download() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	SBC = data.NewBlockChain()
 	SBC.UpdateEntireBlockChain(string(body))
 }
 

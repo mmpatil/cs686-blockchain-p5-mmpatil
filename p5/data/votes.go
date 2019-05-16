@@ -3,7 +3,9 @@ package data
 import (
 	blockpackage "../../blockpackage"
 	p1 "../../p1"
+	"encoding/json"
 	"fmt"
+	"log"
 	"sync"
 )
 
@@ -73,7 +75,18 @@ func (finalizedVotes *FinalizedVotes) InsertInToFinalizedVotes(newBlock blockpac
 	mpt = newBlock.Value
 	mptMap := mpt.GetAll()
 	for key, value := range mptMap {
+		reqresp := RequestResponse{}
 		finalizedVotes.FinalizedVotes[key] = value
+		err := json.Unmarshal([]byte(value), &reqresp)
+		if err != nil {
+			log.Fatal("Error while counting candidate so unmarshal")
+		}
+		id := reqresp.User.CandidateId
+		value, exists := finalizedVotes.CandidateVoteMap[id]
+		if exists {
+			value++
+			finalizedVotes.CandidateVoteMap[id] = value
+		}
 		finalizedVotes.TotalVotes += 1
 		fmt.Println("finalizedVotes", finalizedVotes.FinalizedVotes)
 	}
