@@ -1,7 +1,10 @@
 package data
 
 import (
+	"encoding/json"
 	"fmt"
+	"log"
+	"strings"
 	"sync"
 
 	block1 "../../blockpackage"
@@ -122,4 +125,32 @@ func (sbc *SyncBlockChain) Initial(mpt p1.MerklePatriciaTrie, nonce string) bloc
 //Show method
 func (sbc *SyncBlockChain) Show() string {
 	return sbc.bc.Show()
+}
+
+func (sbc *SyncBlockChain) ShowMPT() string {
+	blockChain := sbc.GetBlockChain()
+	height := sbc.bc.Length
+	var jsonMPT []string
+	jsonMPT = make([]string, 0)
+	for height > 0 {
+		blockArray, exists := blockChain.Get(height)
+		if exists {
+			var tempBlock block1.Block
+			var mpt p1.MerklePatriciaTrie
+			var mapMPT map[string]string
+			tempBlock = blockArray[0]
+			mpt = tempBlock.Value
+			mapMPT = mpt.GetAll()
+
+			jsonBytes, err := json.Marshal(mapMPT)
+			if err != nil {
+				log.Fatal("Error in ShowMPT")
+			}
+			jsonMPT = append(jsonMPT, string(jsonBytes))
+			jsonMPT = append(jsonMPT, "\n")
+		}
+		height--
+	}
+	justString := strings.Join(jsonMPT, " ")
+	return justString
 }

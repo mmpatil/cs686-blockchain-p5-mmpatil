@@ -66,14 +66,14 @@ func RegisterClient(w http.ResponseWriter, r *http.Request) {
 
 			if len(body) > 0 {
 				newUser := p5.User{}
-				fmt.Println("The body is:", string(body))
+				//fmt.Println("The body is:", string(body))
 				err := json.Unmarshal(body, &newUser)
 				if err != nil {
 					log.Fatal("Error while unmarshal the body:", err)
 				}
 				user = newUser
 
-				fmt.Println("The body is:", body)
+				//fmt.Println("The body is:", body)
 				fmt.Println("The response is:", newUser)
 				jsonString, _ := json.Marshal(user)
 				fmt.Fprintf(w, string(jsonString))
@@ -138,8 +138,8 @@ func CheckUser(w http.ResponseWriter, r *http.Request) {
 	publicKey := r.FormValue("publicKey")
 	privateKey := r.FormValue("privateKey")
 
-	fmt.Println("PublicKey:", publicKey)
-	fmt.Println("PrivateKey:", privateKey)
+	//fmt.Println("PublicKey:", publicKey)
+	//fmt.Println("PrivateKey:", privateKey)
 
 	jsonString := "{\"nationalId\":\"556655665566\",\"privateKey\":" + privateKey + ",\"publicKey\":" + publicKey + ",\"candidateId\":0}"
 
@@ -175,6 +175,7 @@ func CheckUser(w http.ResponseWriter, r *http.Request) {
 		user = respUser
 
 		ClientFetchingPeerList()
+
 		type customData struct {
 			Title   string
 			Members []string
@@ -230,8 +231,8 @@ func Check(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Fatal("Error in Server Check function unmarshal", err)
 	}
-	fmt.Println("New user:", newUser)
-	fmt.Println("PKMap:", oldPKMap)
+	//	fmt.Println("New user:", newUser)
+	//	fmt.Println("PKMap:", oldPKMap)
 
 	pub := *(newUser.PublicKey)
 	//fmt.Println("pub:",pub.N.String())
@@ -248,7 +249,7 @@ func Check(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//check private key
-	fmt.Println("Checking private key if equal in Check")
+	//	fmt.Println("Checking private key if equal in Check")
 	oldUser, exists := oldUserList[nationalId]
 
 	//fmt.Println("User Details:",oldUser)
@@ -277,7 +278,7 @@ func Check(w http.ResponseWriter, r *http.Request) {
 			fmt.Println("Valid User!!!!!!!!!!!!!!!!!!! Returning 200 OK")
 			//w.WriteHeader(http.StatusOK)
 			jsonString := oldUser.EncodeToJson()
-			fmt.Println("string(jsonstring) : ", jsonString)
+			//	fmt.Println("string(jsonstring) : ", jsonString)
 			fmt.Fprint(w, jsonString)
 			//fmt.Println("sending Response:",userBytes)
 			//fmt.Fprint(w,userBytes)
@@ -327,6 +328,7 @@ func ClientVote(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+//todo
 func VoteDetails(w http.ResponseWriter, r *http.Request) {
 	_, err2 := fmt.Fprintf(w, "Vote Details Page!!!!")
 	if err2 != nil {

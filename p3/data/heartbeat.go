@@ -2,8 +2,6 @@ package data
 
 import (
 	"fmt"
-
-	"../../p1"
 )
 
 type HeartBeatData struct {
@@ -47,15 +45,15 @@ func PrepareHeartBeatData(sbc *SyncBlockChain, selfId int32, peerMapJson string,
 	return newHeartBeatData
 }
 
-func getMPT() p1.MerklePatriciaTrie {
-	mpt := p1.MerklePatriciaTrie{}
-
-	mpt.Insert("do", "verb")
-	mpt.Insert("dog", "puppy")
-	mpt.Insert("doge", "coin")
-	mpt.Insert("horse", "stallion")
-	return mpt
-}
+//
+//func getMPT() p1.MerklePatriciaTrie {
+//	mpt := p1.MerklePatriciaTrie{}
+//	mpt.Insert("do", "verb")
+//	mpt.Insert("dog", "puppy")
+//	mpt.Insert("doge", "coin")
+//	mpt.Insert("horse", "stallion")
+//	return mpt
+//}
 
 func PrintError(err error, errorString string) {
 	fmt.Println("Error", err)

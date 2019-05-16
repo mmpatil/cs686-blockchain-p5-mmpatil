@@ -52,6 +52,7 @@ func (blockchain *BlockChain) Insert(block block1.Block) {
 
 //genesis func creates the 1st block of blockchain
 func genesis(blockchain *BlockChain, block block1.Block, blockHeight int32) bool {
+
 	blockchain.Chain[blockHeight] = append(blockchain.Chain[blockHeight], block)
 	blockchain.Length++
 	return true
@@ -241,6 +242,5 @@ func (blockchain *BlockChain) ShowCanonical() string {
 		}
 		rs += "\n"
 	}
-
 	return rs
 }

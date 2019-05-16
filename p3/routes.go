@@ -138,4 +138,10 @@ var routes = Routes{
 		"/getPeerList",
 		GetPeerList,
 	},
+	Route{
+		"ShowMPT",
+		"GET",
+		"/showMPT",
+		ShowMPT,
+	},
 }
