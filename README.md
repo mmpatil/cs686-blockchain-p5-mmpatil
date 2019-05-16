@@ -1,8 +1,24 @@
 # cs686_BlockChain_P5
 
 
-# Voting System 
-This is a three part application having a user interface for voters to interact with the voting system(For registration /voting and checking the blockchain for their vote). An authentication server which verifies the identity and allows a valid voter to vote. And a distributed system to count the votes and keep the process of voting completely visible. 
+# Transparent Voting System 
+This is a three part application having a user interface for voters to interact with the voting system(For registration /voting and checking the blockchain for their vote). An Registration server which verifies the identity and And only the the Voting page is displayet to the User. And a distributed system to count the votes and keep the process of voting completely visible. (Blockchain is used as a blackbox)
+
+Step 1: Register with NationaID
+
+Step 2: Sigin with valid Public-Private Key Pair to get the Voting Page
+	
+Step 3: Voting Page displayed for valid user, get the peerlist from 6686 to send a vote to a live listener
+
+Step 4: Blockchain takes care of sending it to other peers update the count for the candidates
+
+Step 5: Can check the vote count of candidate
+
+Not Completed: Allowing the user to fetch its vote using public key from a live listener(peerList).
+
+Ensures that the your vote is counted, i.e. it is a part of the CannonicalBlockchain.
+
+Provides Transparency and Anonymity.
 
 
 Datastructures:
