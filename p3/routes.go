@@ -144,12 +144,12 @@ var routes = Routes{
 		"/showMPT",
 		ShowMPT,
 	},
-	Route{
-		"ShowBlock",
-		"POST",
-		"/showBlock",
-		ShowBlock,
-	},
+	//Route{
+	//	"ShowBlock",
+	//	"POST",
+	//	"/showBlock",
+	//	ShowBlock,
+	//},
 	Route{
 		"ShowBlockAtHeight",
 		"GET",

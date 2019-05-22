@@ -702,6 +702,7 @@ func Vote(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// shows block at a particular height at a miner
 func ShowBlockAtHeight(w http.ResponseWriter, r *http.Request) {
 	//body := BodyToSend{}
 	//bytes, _ := ioutil.ReadAll(r.Body)

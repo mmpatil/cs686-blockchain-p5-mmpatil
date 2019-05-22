@@ -42,7 +42,6 @@ func (reqRes *RequestResponse) EncodeRequestRespToJson() string {
 	return string(jsonBytes)
 }
 
-//todo
 func (user *User) Vote(candidateId int, authenticationServerAddress string, publicKeyServer *rsa.PublicKey) bool {
 	user.CandidateId = candidateId
 	dummyUser := User{"", nil, user.PublicKey, candidateId}
@@ -71,24 +70,25 @@ func (user *User) Vote(candidateId int, authenticationServerAddress string, publ
 	return true
 }
 
-func (user *User) GetVoteDetails(peerAddress string) {
-	dummyUser := User{"", nil, user.PublicKey, 0}
-	userString, err := json.Marshal(dummyUser)
-	if err != nil {
-		log.Fatal("Error in GetVoteDetails: converting to json", err)
-	}
-	sig, err := GenerateSignature(userString, user.PrivateKey)
-	if err != nil {
-		log.Fatal("Error in GetVoteDetails: in GenerateSignature", err)
-	}
-	request := RequestResponse{*user, sig, user.PublicKey}
-	requestByteArray, err := json.Marshal(request)
-	if err != nil {
-		log.Fatal("Error in GetVoteDetails : ", err)
-	}
-	resp, err := http.Post(peerAddress, "application/json; charset=UTF-8", strings.NewReader(string(requestByteArray)))
-	if err != nil {
-		log.Fatal("Error in post request to vote")
-	}
-	fmt.Println("Response of post request:", resp)
-}
+////Not used
+//func (user *User) GetVoteDetails(peerAddress string) {
+//	dummyUser := User{"", nil, user.PublicKey, 0}
+//	userString, err := json.Marshal(dummyUser)
+//	if err != nil {
+//		log.Fatal("Error in GetVoteDetails: converting to json", err)
+//	}
+//	sig, err := GenerateSignature(userString, user.PrivateKey)
+//	if err != nil {
+//		log.Fatal("Error in GetVoteDetails: in GenerateSignature", err)
+//	}
+//	request := RequestResponse{*user, sig, user.PublicKey}
+//	requestByteArray, err := json.Marshal(request)
+//	if err != nil {
+//		log.Fatal("Error in GetVoteDetails : ", err)
+//	}
+//	resp, err := http.Post(peerAddress, "application/json; charset=UTF-8", strings.NewReader(string(requestByteArray)))
+//	if err != nil {
+//		log.Fatal("Error in post request to vote")
+//	}
+//	fmt.Println("Response of post request:", resp)
+//}

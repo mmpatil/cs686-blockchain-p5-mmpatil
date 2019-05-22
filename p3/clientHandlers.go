@@ -150,24 +150,24 @@ func DisplayUsers(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "%s\n", usersArray)
 }
 
-//Shows the details of a block at a particular height
-func ShowBlock(w http.ResponseWriter, r *http.Request) {
-	heightString := r.FormValue("height")
-	height, _ := strconv.Atoi(heightString)
-
-	address := REUSE_ADDR + REGISTRATION_SERVER + "/showBlockAtHeight"
-
-	bodyToSend := BodyToSend{
-		Height: height,
-	}
-
-	body := MarshalBody(bodyToSend)
-
-	_, err2 := http.Post(address, "application/json; charset=UTF-8", strings.NewReader(string(body)))
-	if err2 != nil {
-		log.Fatal("Error in Check User response of Post request")
-	}
-}
+////sends a post request to
+//func ShowBlock(w http.ResponseWriter, r *http.Request) {
+//	heightString := r.FormValue("height")
+//	height, _ := strconv.Atoi(heightString)
+//
+//	address := REUSE_ADDR + REGISTRATION_SERVER + "/showBlockAtHeight"
+//
+//	bodyToSend := BodyToSend{
+//		Height: height,
+//	}
+//
+//	body := MarshalBody(bodyToSend)
+//
+//	_, err2 := http.Post(address, "application/json; charset=UTF-8", strings.NewReader(string(body)))
+//	if err2 != nil {
+//		log.Fatal("Error in Check User response of Post request")
+//	}
+//}
 
 //When a voter/user signs in its Public-Key and Private-Key pair is verified with the registration server.
 func CheckUser(w http.ResponseWriter, r *http.Request) {
