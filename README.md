@@ -20,6 +20,89 @@ Ensures that the your vote is counted, i.e. it is a part of the CannonicalBlockc
 
 Provides Transparency and Anonymity.
 
+## Votes.go
+
+Has two structures :
+-VotesNotFinalized
+	map Votes (key:pubicKey value:RequestResponse)
+	mux sync.Mutex lock
+-FinalizedVotes
+	map FinalizedVotes (key: PublicKey value:RequestResponse in json string)
+	int TotalVotes
+	map CandidateVoteMap (key : CandidateId value:number of votes)
+	mux syn.Mutex lock
+
+Functions:
+-InitializieVoteMaps() :Initializes the FinalizedVotes and VotesNotFinalized struct
+-IfValidBlock() :IfValidBlock method checks Block is valid if the MPT does not contain any public-key that exists in 			FinalizedVotes/ blockchain
+-InsertInToFinalizedVotes() :This inserts the mpt of a block into the finalizedVotes struct of a peer and updates totalvotes and increases the vote for the corresponding Candidate.
+-checkIfVoteInBlockchain() : Checks if the publicKey of a voter already exists in the Blockchain (in other words if a votes has already voted)
+-PrepareMPT() : Prepares an mpt by taking votes from the votesNotFinalized pool of votes that are not still counted and valid.
+-ExistsInFinalizedVote() : Checks if a publicKey exists in the FinalizedVote struct of a peer.
+-ExistsInVotesNotFinalized : Checks if a publicKey exists in the VotesNotFinalized struct of a peer.
+-InsertVotedNotFinalized() : Insert a vote into the vote pool or VotedNotFinalized struct.
+-InsertFinalizedVotes() : Insert a vote into the FinalizedVotes struct.
+
+## user.go 
+
+Has two structures:
+- User
+	NationalId
+	PublicKey
+	PrivateKey
+	CandidateId
+	
+-RequestResponse
+	User
+	Signature
+	PublicKey
+
+-EncodeToJson():Marshall User object
+-EncodeRequestRespToJson(): Marshall RequestResponse object
+-Vote(): Allows user to vote.
+
+## UserList.go
+
+Has one structure:
+UsersList struct:
+	UserMap map  (key : publicKey value:User)
+	PKMap   map   (key : publicKey value: nationalId)
+	mux     sync.Mutex 
+
+-NewUserList(): Initializes newUserList
+-Verify(): Verify if the user already exists
+-CopyUsersMap() :Copies the usersMap
+-CopyPKMap() :Copies the PublicKey map
+
+## routes.go
+
+/startClient - StartClient() : Starts a client/user/voter with initial configuration
+/startReg - StartRegistrationServer() :Starts a registration server with initial configuration
+/signup - SignUp(): Display SignUp page
+/signin - SignIn(): Display SignIn page
+/registerClient - RegisterClient(): Registers a Client with the registration Server/ Authentication Server.
+/checkUser - CheckUser(): When a voter/user signs in its Public-Key and Private-Key pair is verified with the registration 		server.
+/check - Check() : Checks if the new user/voter trying to register already exists
+/voteDetails - VoteDetails(): Gives the user/voter the details of its vote
+/vote - Vote(): Vote sent to the miner
+/getPeerList - GetPeerList():User/Voter fetches a peerlist from the peer 6686
+/showMPT - ShowMPT(): Display MPT
+/showBlockAtHeight/{height} - ShowBlockAtHeight(): Shows block at a particular height at a miner
+/showVoteUser - ShowVoteUser() Shows the vote details of a user to that user.
+/clientVote - ClientVote(): Allows a valid user/voter to vote
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 Datastructures:
 
@@ -31,12 +114,12 @@ Each Response will have user object , signature and public key.
 
 Required function for User:
 
-### 1)Register(authentication_server_address)
+### 1)Register(registration_server_address)
 Get request to the server address with the national id of the user in the body of the  request.
 The response will contain the public and the private key pair. (User object with public and private key values set)
 Set the public_key and private_key values of this user.
 
-### 2) Vote(candidate_id, authentication_server_address)
+### 2) Vote(candidate_id, registration_server_address)
 Set the candidate_id for this user indicating the user is voting this candidate for the election (user.candidate_id = candidate_id). 
 Create a User(userDummy) object with public_key , candidate_id set.
 Create a Response object 
@@ -60,8 +143,8 @@ Mpt := MerkelPatriciaTrie (key = public_key, value = jsonstring)
 Signature := signature of the authentication server
 Public_key : = public_key of the authentication server
 
-## 3.  Authentication_Server
-Each authentication server will have 
+## 3.  Registration Server
+Each Registration server will have 
 public_key, 
 private_key, 
 PeerList [] (list of peers online), 
@@ -69,7 +152,7 @@ UserDetailsMap  := map(key = public_key, value = User object),
 VoteCount := integer , number of people voted.
 VotedMap := map(key= int, value = VoteResponse)
 
-Required Functions for Authentication_server:
+Required Functions for Registration server:
 
 ### 1)Register(w,r)
 Verify the national_id in the body of the request.
@@ -113,14 +196,6 @@ Print “Counting of votes is done”!!
 
 ### 4)PrepareMPT(VotesCountedMap, VotedMap,int count)
 Create a MerklePatriciaTrie object (mpt)
-For i= count ; I < count + 10; count++{
-	VoteResponse := VotedMap.get(count)
-	count++;
-	Mpt.Insert(VoteResponse.public_key, json.Marshall(VoteResponse))
-	insert in VotesCountedMap(count,VoteResponse.public_key)
-}
-Return mpt,VotesCountedMap, count
-
 
 
 ## PEERS (BLOCKCHAIN)
@@ -155,15 +230,11 @@ If the signature is valid
 
 
 ------------------------------------------------------------------------------------------------------------
-Comments for Me:
-
 # Crypto
 
 ## functions ->
 1) create pub - priv key pair
     :using rsa.GenerateKey() method from the cryto package.
-    
-    
     
 2) create Signature : creating signature for the message with the private key with SHA256 hash function.
 
