@@ -10,17 +10,18 @@ import (
 )
 
 type VotesNotFinalized struct {
-	Votes map[string]p5.RequestResponse
+	Votes map[string]p5.RequestResponse //key:PublicKey
 	mux   sync.Mutex
 }
 
 type FinalizedVotes struct {
-	FinalizedVotes   map[string]string `json:"FinalizedVotes"`
+	FinalizedVotes   map[string]string `json:"FinalizedVotes"` // key: PublicKey value:RequestResponse in json string.
 	TotalVotes       int               `json:"TotalVotes"`
-	CandidateVoteMap map[int]int       `json:"CandidateVoteMap"`
+	CandidateVoteMap map[int]int       `json:"CandidateVoteMap"` //key : CandidateId value:number of votes
 	mux              sync.Mutex
 }
 
+//Initializes the FinalizedVotes and VotesNotFinalized struct
 func InitializieVoteMaps() (VotesNotFinalized, FinalizedVotes) {
 
 	notfinalizedVotes := VotesNotFinalized{
@@ -39,6 +40,7 @@ func InitializieVoteMaps() (VotesNotFinalized, FinalizedVotes) {
 	return notfinalizedVotes, finalizedVotes
 }
 
+//IfValidBlock method checks Block is valid if the MPT does not contain any public-key that exists in FinalizedVotes/ blockchain
 func (finalizedVotes *FinalizedVotes) IfValidBlock(newBlock Block) bool {
 	fmt.Println("In votes.go IfValidBlock")
 	finalizedVotes.mux.Lock()
@@ -79,6 +81,7 @@ func (finalizedVotes *FinalizedVotes) IfValidBlock(newBlock Block) bool {
 	return true
 }
 
+//This inserts the mpt of a block into the finalizedVotes struct of a peer and updates totalvotes and increases the vote for the corresponding Candidate.
 func (finalizedVotes *FinalizedVotes) InsertInToFinalizedVotes(newBlock Block) {
 	fmt.Println("----------------------------------InsertInToFinalizedVotes-----------------")
 	finalizedVotes.mux.Lock()
@@ -106,6 +109,7 @@ func (finalizedVotes *FinalizedVotes) InsertInToFinalizedVotes(newBlock Block) {
 	}
 }
 
+//Checks if the publicKey of a voter already exists in the Blockchain (in other words if a votes has already voted)
 func (finalizedVotes *FinalizedVotes) checkIfVoteInBlockchain(tempPublickey string) bool {
 	finalizedVotes.mux.Lock()
 	defer finalizedVotes.mux.Unlock()
@@ -117,6 +121,7 @@ func (finalizedVotes *FinalizedVotes) checkIfVoteInBlockchain(tempPublickey stri
 	return false
 }
 
+//Prepares an mpt by taking votes from the votesNotFinalized pool of votes that are not still counted and valid.
 func PrepareMPT(finalizedVotes FinalizedVotes, votesNotFinalized VotesNotFinalized, initial bool) (p1.MerklePatriciaTrie, bool) {
 	if initial {
 		mpt := p1.MerklePatriciaTrie{}
@@ -155,6 +160,7 @@ func PrepareMPT(finalizedVotes FinalizedVotes, votesNotFinalized VotesNotFinaliz
 	return mpt, valid
 }
 
+//Checks if a publicKey exists in the FinalizedVote struct of a peer.
 func (finalizedVotes *FinalizedVotes) ExistsInFinalizedVote(tempPublicKey string) bool {
 	finalizedVotes.mux.Lock()
 	defer finalizedVotes.mux.Unlock()
@@ -163,6 +169,7 @@ func (finalizedVotes *FinalizedVotes) ExistsInFinalizedVote(tempPublicKey string
 	return exists
 }
 
+//Checks if a publicKey exists in the VotesNotFinalized struct of a peer.
 func (votesNotFinalized *VotesNotFinalized) ExistsInVotesNotFinalized(tempPublicKey string) bool {
 	votesNotFinalized.mux.Lock()
 	defer votesNotFinalized.mux.Unlock()
@@ -171,6 +178,7 @@ func (votesNotFinalized *VotesNotFinalized) ExistsInVotesNotFinalized(tempPublic
 	return exists
 }
 
+//Insert a vote into the vote pool or VotedNotFinalized struct
 func (votesNotFinalized *VotesNotFinalized) InsertVotedNotFinalized(publicKey string, reqresp p5.RequestResponse) bool {
 	votesNotFinalized.mux.Lock()
 	defer votesNotFinalized.mux.Unlock()
@@ -183,6 +191,7 @@ func (votesNotFinalized *VotesNotFinalized) InsertVotedNotFinalized(publicKey st
 	return false
 }
 
+//Insert a vote into the FinalizedVotes struct
 func (finalizedVotes *FinalizedVotes) InsertFinalizedVotes(publicKey string, jsonString string) bool {
 	finalizedVotes.mux.Lock()
 	defer finalizedVotes.mux.Unlock()

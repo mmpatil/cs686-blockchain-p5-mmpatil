@@ -4,7 +4,6 @@ import (
 	"crypto/rsa"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"strings"
@@ -23,18 +22,7 @@ type RequestResponse struct {
 	PublicKey *rsa.PublicKey `json:"publicKey"`
 }
 
-func RegisterUser(authenticationServerRegister string) []byte {
-	fmt.Println("In RegisterUser")
-	response, err := http.Get(authenticationServerRegister)
-	if err != nil {
-		log.Fatal("Error in RegisterUser:", err)
-	}
-	defer response.Body.Close()
-	body, err := ioutil.ReadAll(response.Body)
-	//take the public private key and assign to the user
-	return body
-}
-
+//Marshall User object
 func (u *User) EncodeToJson() string {
 	jsonb, err := json.Marshal(u)
 
@@ -44,7 +32,7 @@ func (u *User) EncodeToJson() string {
 	return string(jsonb)
 }
 
-//todo
+//Marshall RequestResponse object
 func (reqRes *RequestResponse) EncodeRequestRespToJson() string {
 	jsonBytes, err := json.Marshal(reqRes)
 

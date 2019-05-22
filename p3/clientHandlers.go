@@ -24,12 +24,13 @@ type BodyToSend struct {
 	Height int `json:"Height"`
 }
 
+//Marshal the body
 func MarshalBody(body BodyToSend) string {
-
 	a, _ := json.Marshal(body)
 	return string(a)
 }
 
+//Starts a client with initial configuration
 func StartClient(w http.ResponseWriter, r *http.Request) {
 	//fmt.Fprintf(w, "%s\n", "Client started....")
 	tpl.ExecuteTemplate(w, "startclient.html", nil)
@@ -39,24 +40,28 @@ func StartClient(w http.ResponseWriter, r *http.Request) {
 	//ClientPeersAlive.Add(SECOND_ADDR,int32(6687))
 }
 
+//Starts RegistrationServer/Authentication Server with initial configuration
 func StartRegistrationServer(w http.ResponseWriter, r *http.Request) {
 	userList = p5.NewUserList()
 }
 
+//
 func ShowVoteUserC(w http.ResponseWriter, r *http.Request) {
 	tpl.ExecuteTemplate(w, "voteinfo.html", nil)
 }
 
+//New Client signup
 func SignUp(w http.ResponseWriter, r *http.Request) {
 	tpl.ExecuteTemplate(w, "signup.html", nil)
 }
 
+//Client Signs in
 func SignIn(w http.ResponseWriter, r *http.Request) {
 	tpl.ExecuteTemplate(w, "signin.html", nil)
 }
 
+//Registers a Client with the registration Server/ Authentication Server.
 func RegisterClient(w http.ResponseWriter, r *http.Request) {
-	//todo
 	if r.Method != "POST" {
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
@@ -96,6 +101,7 @@ func RegisterClient(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+//NOT USED
 func UserRegister(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	nationalId := vars["nationalId"]
@@ -144,6 +150,7 @@ func DisplayUsers(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "%s\n", usersArray)
 }
 
+//Shows the details of a block at a particular height
 func ShowBlock(w http.ResponseWriter, r *http.Request) {
 	heightString := r.FormValue("height")
 	height, _ := strconv.Atoi(heightString)
@@ -162,6 +169,7 @@ func ShowBlock(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+//When a voter/user signs in its Public-Key and Private-Key pair is verified with the registration server.
 func CheckUser(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "POST" {
 		http.Redirect(w, r, "/", http.StatusSeeOther)
@@ -224,6 +232,7 @@ func CheckUser(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+//Shows the vote details of a user to that user.
 func ShowVoteUser(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "POST" {
 		http.Redirect(w, r, "/", http.StatusSeeOther)
@@ -256,6 +265,7 @@ func ShowVoteUser(w http.ResponseWriter, r *http.Request) {
 
 }
 
+//User/Voter fetches a peerlist from the peer 6686
 func ClientFetchingPeerList() {
 
 	address := FIRST_ADDR + "/getPeerList"
@@ -281,6 +291,7 @@ func ClientFetchingPeerList() {
 	}
 }
 
+//Checks if the new user/voter trying to register already exists
 func Check(w http.ResponseWriter, r *http.Request) {
 
 	oldUserList := userList.CopyUsersMap()
@@ -353,6 +364,7 @@ func Check(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+//Allows a valid user/voter to vote
 func ClientVote(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "POST" {
 		http.Redirect(w, r, "/", http.StatusSeeOther)

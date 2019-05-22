@@ -25,6 +25,7 @@ func GenerateKeyPair() *rsa.PrivateKey {
 	return privateKey
 }
 
+//Generate Signature
 func GenerateSignature(message []byte, privateKey *rsa.PrivateKey) ([]byte, error) {
 	hashed := sha3.Sum256(message)
 	signature, err := rsa.SignPKCS1v15(rand.Reader, privateKey, crypto.SHA256, hashed[:])
@@ -35,6 +36,7 @@ func GenerateSignature(message []byte, privateKey *rsa.PrivateKey) ([]byte, erro
 	return signature, nil
 }
 
+//Verify Signature
 func VerifySignature(pub *rsa.PublicKey, sig []byte, message []byte) bool {
 	hashed := sha3.Sum256(message)
 	err := rsa.VerifyPKCS1v15(pub, crypto.SHA256, hashed[:], sig)

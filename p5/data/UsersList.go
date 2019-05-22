@@ -6,8 +6,8 @@ import (
 )
 
 type UsersList struct {
-	UserMap map[string]User   `json:"UserMap"`
-	PKMap   map[string]string `json:"PKMap"`
+	UserMap map[string]User   `json:"UserMap"` //key : publicKey value:User
+	PKMap   map[string]string `json:"PKMap"`   //key : publicKey value: nationalId
 	mux     sync.Mutex        `json:"mux"`
 }
 
@@ -25,6 +25,7 @@ func NewUserList() UsersList {
 	return userList
 }
 
+//Verify if the user already exists
 func (usersList *UsersList) Verify(nationalId string) (User, bool) {
 	//verify the national ID
 	usersList.mux.Lock()
@@ -61,6 +62,7 @@ func (usersList *UsersList) DisplayUserList() map[string]User {
 	return usersList.UserMap
 }
 
+//Copies the usersMap
 func (usersList *UsersList) CopyUsersMap() map[string]User {
 	usersList.mux.Lock()
 	defer usersList.mux.Unlock()
@@ -71,6 +73,7 @@ func (usersList *UsersList) CopyUsersMap() map[string]User {
 	return newUsersList
 }
 
+//copies the PublicKey map
 func (usersList *UsersList) CopyPKMap() map[string]string {
 	usersList.mux.Lock()
 	defer usersList.mux.Unlock()

@@ -116,7 +116,7 @@ func Start(w http.ResponseWriter, r *http.Request) {
 //}
 //}
 
-//now
+//Gets the PeerList from a live peer
 func GetPeerList(w http.ResponseWriter, r *http.Request) {
 	peers, err := Peers.PeerMapToJson()
 	if err != nil {
@@ -152,6 +152,7 @@ func GetPeerList(w http.ResponseWriter, r *http.Request) {
 //	fmt.Println("Entered in Register Client. The address used will be:",address)
 //}
 
+//starts the Authentication/Registration server
 func StartAuthServer(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "%s\n", "Authentication server started....")
 }
@@ -161,7 +162,7 @@ func Show(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "%s\n%s", Peers.Show(), SBC.Show())
 }
 
-// Display peerList and sbc
+// Display MPT
 func ShowMPT(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "%s\n", SBC.ShowMPT())
 }
@@ -293,7 +294,6 @@ func HeartBeatReceive(w http.ResponseWriter, r *http.Request) {
 
 //
 func StartTryingNonces() {
-	fmt.Println("11111111111111111111111111111111111")
 	foundNonce := false
 	for true {
 		//	foundNonce = false
@@ -303,7 +303,7 @@ func StartTryingNonces() {
 			//fmt.Println("Trying for nonce again")
 			foundNonce = false
 			var parentBlock blockpackage.Block
-			var valid bool //some correction dont know //todo
+			var valid bool
 			valid = false
 			parentBlock = parentBlocks[0]
 			parentHash := parentBlock.Header.Hash
@@ -312,10 +312,7 @@ func StartTryingNonces() {
 			mpt, valid = blockpackage.PrepareMPT(finalizedVotesStruct, votedNotFinalizedStruct, false) //now p5
 			//fmt.Println("Valid:",valid)  // debugging
 			if valid { //now p5 1
-				//fmt.Println("444444444444444444444444444444444444444444444")
 
-				//mpt := getMPT() //now
-				fmt.Println("*************************************This is a valid MPT***********************************")
 				str := ""
 				str = str + parentHash
 				for foundNonce == false {
@@ -327,7 +324,6 @@ func StartTryingNonces() {
 
 						b1 = SBC.GenBlock(mpt, nonce, height, finalizedVotesStruct)
 						blockjson, _ := b1.EncodeToJSON()
-						//if ReceivingBlockHeight != SBC.GetLatestHeight() { //todo
 						//check if the block is valid block
 						if finalizedVotesStruct.IfValidBlock(b1) { //now p5
 							//	if b1.Header.Height > latestBlockRecievedHeight { //now p5
@@ -384,7 +380,6 @@ func ifValidBlockBeat(newheartBeat data.HeartBeatData) bool {
 	blockJSON := newheartBeat.BlockJson
 	newBlock, _ := blockpackage.DecodeFromJSON(blockJSON)
 
-	//todo now lock
 	result := finalizedVotesStruct.IfValidBlock(newBlock)
 	return result
 	//mpt := newBlock.Value
